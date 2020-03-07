@@ -23,7 +23,7 @@ class ParallelizedDijkstra{
     * @param graph the representation of the graph, the key is vertex index and the value is its' edges
     * @return the shortest distance from start to end
     */
-    private int dijkstra(int start, int end, Map<Integer, List<Edge>> graph){
+    private int dijkstra(int N, int start, int end, Map<Integer, List<Edge>> graph){
         //TODO
     }
 
