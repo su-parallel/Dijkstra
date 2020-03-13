@@ -1,17 +1,51 @@
 import java.util.*; 
 import java.lang.*; 
-import java.io.*; 
+import java.io.*;
+
   
 class SerializedVersion { 
+    
+
+	class Edge{
+        int s, e, dis;
+        public Edge(int s, int e, int dis){
+            this.s = s;
+            this.e = e;
+            this.dis = dis;
+        }
+    }
+
+    /*
+    * this method is used to build the graph by the nodes read from the local data
+    */
+    private Map<Integer, List<Edge>> buildGraph(List<List<Integer>> nodes){
+        Map<Integer, List<Edge>> graph = new HashMap<>();
+        for(int i = 1; i < nodes.size(); i ++){
+            int s = nodes.get(i).get(0), e = nodes.get(i).get(1), dis = nodes.get(i).get(2);
+            // add edge from s to e
+            if(!graph.containsKey(s)){
+                graph.put(s, new ArrayList<Edge>());
+            }
+            List<Edge> edges1 = graph.get(s);
+            edges1.add(new Edge(s, e, dis));
+            // add edge from e to s
+            if(!graph.containsKey(e)){
+                graph.put(e, new ArrayList<Edge>());
+            }
+            List<Edge> edges2 = graph.get(e);
+            edges2.add(new Edge(e, s, dis));
+        }
+        return graph;
+    }
+
     // A utility function to find the vertex with minimum distance value, 
     // from the set of vertices not yet included in shortest path tree 
-    static final int V = 9; 
-    int minDistance(int dist[], Boolean sptSet[]) 
+    int minDistance(int N, int dist[], Boolean sptSet[]) 
     { 
         // Initialize min value 
         int min = Integer.MAX_VALUE, min_index = -1; 
   
-        for (int v = 0; v < V; v++) 
+        for (int v = 0; v < N; v++) 
             if (sptSet[v] == false && dist[v] <= min) { 
                 min = dist[v]; 
                 min_index = v; 
@@ -20,74 +54,71 @@ class SerializedVersion {
         return min_index; 
     } 
   
-    // A utility function to print the constructed distance array 
-    void printSolution(int dist[]) 
-    { 
-        System.out.println("Vertex \t\t Distance from Source"); 
-        for (int i = 0; i < V; i++) 
-            System.out.println(i + " \t\t " + dist[i]); 
-    } 
-  
     // Function that implements Dijkstra's single source shortest path 
     // algorithm for a graph represented using adjacency matrix 
     // representation 
-    void dijkstra(int graph[][], int src) 
+    int dijkstra(int N, int start, int end, Map<Integer, List<Edge>>graph) 
     { 
-        int dist[] = new int[V]; // The output array. dist[i] will hold 
-        // the shortest distance from src to i 
+        int dist[] = new int[N]; // The output array. dist[i] will hold 
+        // the shortest distance from start to i 
   
         // sptSet[i] will true if vertex i is included in shortest 
         // path tree or shortest distance from src to i is finalized 
-        Boolean sptSet[] = new Boolean[V]; 
+        Boolean selected[] = new Boolean[N]; 
   
         // Initialize all distances as INFINITE and stpSet[] as false 
-        for (int i = 0; i < V; i++) { 
+        for (int i = 0; i < N; i++) { 
             dist[i] = Integer.MAX_VALUE; 
-            sptSet[i] = false; 
+            selected[i] = false; 
         } 
   
         // Distance of source vertex from itself is always 0 
-        dist[src] = 0; 
+        dist[start] = 0; 
   
         // Find shortest path for all vertices 
-        for (int count = 0; count < V - 1; count++) { 
+        for (int count = 0; count < N - 1; count++) { 
             // Pick the minimum distance vertex from the set of vertices 
             // not yet processed. u is always equal to src in first 
             // iteration. 
-            int u = minDistance(dist, sptSet); 
+            int u = minDistance(N, dist, selected); 
   
             // Mark the picked vertex as processed 
-            sptSet[u] = true; 
+            selected[u] = true; 
   
-            // Update dist value of the adjacent vertices of the 
-            // picked vertex. 
-            for (int v = 0; v < V; v++) 
+          
+            
+  				
+			//get all the edges that connected to me
+			List<Edge> myNeighbors = graph.get(u);
+
+			//loop through all my neighbors to update dis[]
+			for(Edge neighbor: myNeighbors){
+				if(!selected[neighbor.e] &&dist[neighbor.e] > dist[u] + neighbor.dis)
+					dist[neighbor.e] = dist[u] + neighbor.dis;
+			}
+               
+        }
+        return dist[end]; 
   
-                // Update dist[v] only if is not in sptSet, there is an 
-                // edge from u to v, and total weight of path from src to 
-                // v through u is smaller than current value of dist[v] 
-                if (!sptSet[v] && graph[u][v] != 0 && dist[u] != Integer.MAX_VALUE && dist[u] + graph[u][v] < dist[v]) 
-                    dist[v] = dist[u] + graph[u][v]; 
-        } 
-  
-        // print the constructed distance array 
-        printSolution(dist); 
     } 
   
     // Driver method 
     public static void main(String[] args) 
     { 
-        /* Let us create the example graph discussed above */
-        int graph[][] = new int[][] { { 0, 4, 0, 0, 0, 0, 0, 8, 0 }, 
-                                      { 4, 0, 8, 0, 0, 0, 0, 11, 0 }, 
-                                      { 0, 8, 0, 7, 0, 4, 0, 0, 2 }, 
-                                      { 0, 0, 7, 0, 9, 14, 0, 0, 0 }, 
-                                      { 0, 0, 0, 9, 0, 10, 0, 0, 0 }, 
-                                      { 0, 0, 4, 14, 10, 0, 2, 0, 0 }, 
-                                      { 0, 0, 0, 0, 0, 2, 0, 1, 6 }, 
-                                      { 8, 11, 0, 0, 0, 0, 1, 0, 7 }, 
-                                      { 0, 0, 2, 0, 0, 0, 6, 7, 0 } }; 
-        SerializedVersion t = new SerializedVersion(); 
-        t.dijkstra(graph, 0); 
+        
+        SerializedVersion obj = new SerializedVersion();
+        String filePath = "/Users/haoli/Downloads/Dijkstra-master/testcase/TestData1.txt";
+        List<List<Integer>> data = Utils.readData(filePath);
+        if(data.size() < 2){
+            return ;
+        }
+
+        Map<Integer, List<Edge>> graph = obj.buildGraph(data);
+        int N = data.get(0).get(0), start = data.get(0).get(1), end = data.get(0).get(2), targetDis = data.get(0).get(3);
+        int dis = obj.dijkstra(N, start, end, graph);
+
+        System.out.println(dis + " / " + targetDis);
+        
+        
     } 
 } 
