@@ -3,6 +3,7 @@ import java.util.*;
 class ParallelizedDijkstra{
     
     private static final int MAX_INF = Integer.MAX_VALUE;
+    private static final int THREAD_N = 4;
 
     class Edge{
         int s, e, dis;
@@ -65,10 +66,31 @@ class ParallelizedDijkstra{
         dis[start] = 0;
         // update vertice which connects the `start` vertex
         if(graph.containsKey(start)){
+            // serial method code
+            // List<Edge> connectedVertex = graph.get(start);
+            // for(Edge edge : connectedVertex){
+            //     if(!selected[edge.e] && dis[edge.e] > dis[start] + edge.dis){
+            //         dis[edge.e] = dis[start] + edge.dis;
+            //     }
+            // }
+            List<Thread> threads = new ArrayList<>();
             List<Edge> connectedVertex = graph.get(start);
-            for(Edge edge : connectedVertex){
-                if(!selected[edge.e] && dis[edge.e] > dis[start] + edge.dis){
-                    dis[edge.e] = dis[start] + edge.dis;
+            int size = connectedVertex.size(), thread_size = size / THREAD_N, startIndex = 0;
+            if(thread_size == 0){
+                thread_size = size;
+            }
+            while(startIndex < size){
+                updateVertexDistance update = new updateVertexDistance(startIndex, Math.min(startIndex + thread_size, size), start, connectedVertex, dis, selected);
+                startIndex += thread_size;
+                Thread t = new Thread(update);
+                threads.add(t);
+                t.start();
+            }
+            for(Thread t : threads){
+                try{
+                    t.join();
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
                 }
             }
         }
@@ -87,10 +109,31 @@ class ParallelizedDijkstra{
             dis[selectedVertex] = minDis;
             selected[selectedVertex] = true;
             if(graph.containsKey(selectedVertex)){
+                // serial method code
+                // List<Edge> connectedVertex = graph.get(selectedVertex);
+                // for(Edge edge : connectedVertex){
+                //     if(!selected[edge.e] && dis[edge.e] > dis[selectedVertex] + edge.dis){
+                //         dis[edge.e] = dis[selectedVertex] + edge.dis;
+                //     }
+                // }
+                List<Thread> threads = new ArrayList<>();
                 List<Edge> connectedVertex = graph.get(selectedVertex);
-                for(Edge edge : connectedVertex){
-                    if(!selected[edge.e] && dis[edge.e] > dis[selectedVertex] + edge.dis){
-                        dis[edge.e] = dis[selectedVertex] + edge.dis;
+                int size = connectedVertex.size(), thread_size = size / THREAD_N, startIndex = 0;
+                if(thread_size == 0){
+                    thread_size = size;
+                }
+                while(startIndex < size){
+                    updateVertexDistance update = new updateVertexDistance(startIndex, Math.min(startIndex + thread_size, size), selectedVertex, connectedVertex, dis, selected);
+                    startIndex += thread_size;
+                    Thread t = new Thread(update);
+                    threads.add(t);
+                    t.start();
+                } 
+                for(Thread t : threads){
+                    try{
+                        t.join();
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
                     }
                 }
             }
@@ -145,7 +188,7 @@ class ParallelizedDijkstra{
 
     public static void main(String[] args){
         ParallelizedDijkstra obj = new ParallelizedDijkstra();
-        String filePath = "/Users/xxx0624/Dijkstra/testcase/TestData3.txt";
+        String filePath = "/Users/xxx0624/Dijkstra/testcase/TestData1.txt";
         List<List<Integer>> data = Utils.readData(filePath);
         if(data.size() < 2){
             return ;
