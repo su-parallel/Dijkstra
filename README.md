@@ -8,7 +8,11 @@
 
 ## TestData Format
 N, start, end, targetDistance
+
 vertex1, vertex2, disBetweenVertice
+
 vertex1, vertex2, disBetweenVertice
+
 ...
+
 vertex1, vertex2, disBetweenVertice
