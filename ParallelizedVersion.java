@@ -1,5 +1,9 @@
 import java.util.*;
+<<<<<<< HEAD:ParallelizedDijkstra.java
 import java.lang.Math;
+=======
+import java.io.*;
+>>>>>>> 96c052e1efe0f40d493b56e83bf21a6c0f9454bf:ParallelizedVersion.java
 
 class ParallelizedDijkstra{
     
@@ -88,6 +92,7 @@ class ParallelizedDijkstra{
             if(selectedVertex == -1){
                 break;
             }
+<<<<<<< HEAD:ParallelizedDijkstra.java
             **/
 
             // threaded version
@@ -99,6 +104,8 @@ class ParallelizedDijkstra{
             System.out.println(selectedVertex);
             System.out.println(minDis);
             System.out.printf("[i = %d] vertex = %d, minDis = %d\n", i, selectedVertex, minDis);
+=======
+>>>>>>> 96c052e1efe0f40d493b56e83bf21a6c0f9454bf:ParallelizedVersion.java
             dis[selectedVertex] = minDis;
             selected[selectedVertex] = true;
             if(graph.containsKey(selectedVertex)){
@@ -250,8 +257,33 @@ class ParallelizedDijkstra{
         }
     }
 
+    private void testDijkstra(){
+        String folderPath = "testcase/";
+        File folder = new File(folderPath);
+        File[] files = folder.listFiles();
+        for(int i = 0; i < files.length; i ++){
+            List<List<Integer>> data = Utils.readData(files[i].getAbsolutePath());
+            if(data.size() < 2){
+                return ;
+            }
+            Map<Integer, List<Edge>> graph = buildGraph(data);
+            int N = data.get(0).get(0), start = data.get(0).get(1), end = data.get(0).get(2);
+            int targetDis = 0;
+            // for largeTestData, there isn't targetDistance
+            if(data.get(0).size() >= 4){
+                targetDis = data.get(0).get(3);
+            }
+            System.out.printf("Start running on LargeTestData[%s]\n", files[i].getName());
+            long startTime = System.currentTimeMillis();
+            dijkstra(N, start, end, graph);
+            long endTime = System.currentTimeMillis();
+            System.out.printf("TestData[%s] with N = %d, number of edges = %d, finished in %d ms\n\n", files[i].getName(), N, N * (N - 1), endTime - startTime);
+        }
+    }
+
     public static void main(String[] args){
         ParallelizedDijkstra obj = new ParallelizedDijkstra();
+<<<<<<< HEAD:ParallelizedDijkstra.java
         String filePath = "/Users/haoli/Downloads/Dijkstra-master/testcase/TestData1.txt";
         List<List<Integer>> data = Utils.readData(filePath);
         
@@ -262,5 +294,8 @@ class ParallelizedDijkstra{
         int N = data.get(0).get(0), start = data.get(0).get(1), end = data.get(0).get(2), targetDis = data.get(0).get(3);
         int dis = obj.dijkstra(N, start, end, graph);
         System.out.println(dis + " / " + targetDis);
+=======
+        obj.testDijkstra();
+>>>>>>> 96c052e1efe0f40d493b56e83bf21a6c0f9454bf:ParallelizedVersion.java
     }
 }
