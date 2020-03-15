@@ -107,17 +107,17 @@ class SerializedVersion {
     { 
         
         SerializedVersion obj = new SerializedVersion();
-        String filePath = "/Users/haoli/Downloads/Dijkstra-master/testcase/TestData1.txt";
+        String filePath = "testcase/TestData1.txt";
         List<List<Integer>> data = Utils.readData(filePath);
         if(data.size() < 2){
             return ;
         }
 
         Map<Integer, List<Edge>> graph = obj.buildGraph(data);
-        int N = data.get(0).get(0), start = data.get(0).get(1), end = data.get(0).get(2), targetDis = data.get(0).get(3);
+        int N = data.get(0).get(0), start = data.get(0).get(1), end = data.get(0).get(2);
         int dis = obj.dijkstra(N, start, end, graph);
 
-        System.out.println(dis + " / " + targetDis);
+        System.out.println(dis);
         
         
     } 
