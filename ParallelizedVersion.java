@@ -1,9 +1,5 @@
 import java.util.*;
-<<<<<<< HEAD:ParallelizedDijkstra.java
-import java.lang.Math;
-=======
 import java.io.*;
->>>>>>> 96c052e1efe0f40d493b56e83bf21a6c0f9454bf:ParallelizedVersion.java
 
 class ParallelizedDijkstra{
     
@@ -11,9 +7,6 @@ class ParallelizedDijkstra{
     private static final int THREAD_N = 4;
     private int[] shortestDis = new int[THREAD_N];
     private int[] closestVertex = new int[THREAD_N];
-
-    
-
 
     class Edge{
         int s, e, dis;
@@ -67,20 +60,12 @@ class ParallelizedDijkstra{
     private int dijkstra(int N, int start, int end, Map<Integer, List<Edge>> graph){
         int[] dis = new int[N];
         boolean[] selected = new boolean[N];
-
         for(int i = 0; i < N; i ++){
             dis[i] = MAX_INF;
             selected[i] = false;
         }
-
-        for(int i = 0; i < THREAD_N; i++){
-            shortestDis[i] = MAX_INF;
-            closestVertex[i] = -1;
-        }
-
         dis[start] = 0;
         for(int i = 0; i < N; i ++){
-            
             /**
             int selectedVertex = -1, minDis = MAX_INF;
             for(int j = 0; j < N; j ++){
@@ -92,20 +77,11 @@ class ParallelizedDijkstra{
             if(selectedVertex == -1){
                 break;
             }
-<<<<<<< HEAD:ParallelizedDijkstra.java
             **/
-
-            // threaded version
-
             int[] result = findMinDistance(N, selected, dis);
             int selectedVertex = result[0];
             int minDis = result[1];
 
-            System.out.println(selectedVertex);
-            System.out.println(minDis);
-            System.out.printf("[i = %d] vertex = %d, minDis = %d\n", i, selectedVertex, minDis);
-=======
->>>>>>> 96c052e1efe0f40d493b56e83bf21a6c0f9454bf:ParallelizedVersion.java
             dis[selectedVertex] = minDis;
             selected[selectedVertex] = true;
             if(graph.containsKey(selectedVertex)){
@@ -178,7 +154,7 @@ class ParallelizedDijkstra{
         }
         
         //doing the reduce, to find the shortest distance and its vertext
-        for(int i = 0; i < THREAD_N; i++){
+        for(int i = 0; i <= thread_index; i++){
             if(shortestDis[i] < minDis){
                 minDis = shortestDis[i];
                 selectedVertex = closestVertex[i];
@@ -191,7 +167,7 @@ class ParallelizedDijkstra{
 
         return array;
     }
-
+    
     /*
     * this class is used in the first parallel part, which can help you find the closest vertex to the start vertex
     */
@@ -207,6 +183,8 @@ class ParallelizedDijkstra{
             this.thread_index = thread_index;
             this.selected = selected;
             this.dis = dis;
+        shortestDis[thread_index] = MAX_INF;
+        closestVertex[thread_index] = -1;
         }
 
 
@@ -283,19 +261,6 @@ class ParallelizedDijkstra{
 
     public static void main(String[] args){
         ParallelizedDijkstra obj = new ParallelizedDijkstra();
-<<<<<<< HEAD:ParallelizedDijkstra.java
-        String filePath = "/Users/haoli/Downloads/Dijkstra-master/testcase/TestData1.txt";
-        List<List<Integer>> data = Utils.readData(filePath);
-        
-        if(data.size() < 2){
-            return ;
-        }
-        Map<Integer, List<Edge>> graph = obj.buildGraph(data);
-        int N = data.get(0).get(0), start = data.get(0).get(1), end = data.get(0).get(2), targetDis = data.get(0).get(3);
-        int dis = obj.dijkstra(N, start, end, graph);
-        System.out.println(dis + " / " + targetDis);
-=======
         obj.testDijkstra();
->>>>>>> 96c052e1efe0f40d493b56e83bf21a6c0f9454bf:ParallelizedVersion.java
     }
 }
