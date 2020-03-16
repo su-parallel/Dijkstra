@@ -8,10 +8,22 @@
 
 ## Run Dijkstra
 ```
-1. Compile: javac ParallelizedVersion.java
-2. Run: java ParallelizedVersion // wait some time
+1. Compile: make all
+2. Run: java ParallelizedDijkstra // wait some time
+3. Run: java ParallelizedVersion // wait some time
 ```
 
+
+## Result
+| Data Size(Vertice Number / Edges Number)       | Parallelized (ms) (with 4 threads)        | Serial  |
+| ------------- |:-------------:| -----:|
+| 5/20      | 2 | 0 |
+| 10/90      | 7      |   0 |
+| 100/9900 | 75     |    0 |
+| 1000/999000 | 622      |    35 |
+| 2000/3998000 | 2104      |    64 |
+| 3000/8997000 | 2424      |    129 |
+| 4000/15996000 | 11505      |    299 |
 ## About
 1. ParallelizedVersion.java is the parallelized version of Dijkstra.
 2. SerializedVersion.java is the serialized version of Dijkstra.
