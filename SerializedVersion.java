@@ -5,7 +5,6 @@ import java.io.*;
   
 class SerializedVersion { 
     
-
 	class Edge{
         int s, e, dis;
         public Edge(int s, int e, int dis){
@@ -38,87 +37,71 @@ class SerializedVersion {
         return graph;
     }
 
-    // A utility function to find the vertex with minimum distance value, 
-    // from the set of vertices not yet included in shortest path tree 
     int minDistance(int N, int dist[], Boolean sptSet[]) 
     { 
         // Initialize min value 
         int min = Integer.MAX_VALUE, min_index = -1; 
-  
-        for (int v = 0; v < N; v++) 
-            if (sptSet[v] == false && dist[v] <= min) { 
-                min = dist[v]; 
-                min_index = v; 
+        for (int v = 0; v < N; v++) {
+            if (!sptSet[v] && dist[v] <= min) { 
+                min = dist[v];
+                min_index = v;
             } 
-  
+        }
         return min_index; 
     } 
   
-    // Function that implements Dijkstra's single source shortest path 
-    // algorithm for a graph represented using adjacency matrix 
-    // representation 
     int dijkstra(int N, int start, int end, Map<Integer, List<Edge>>graph) 
     { 
-        int dist[] = new int[N]; // The output array. dist[i] will hold 
-        // the shortest distance from start to i 
-  
-        // sptSet[i] will true if vertex i is included in shortest 
-        // path tree or shortest distance from src to i is finalized 
+        int dist[] = new int[N]; 
         Boolean selected[] = new Boolean[N]; 
   
-        // Initialize all distances as INFINITE and stpSet[] as false 
         for (int i = 0; i < N; i++) { 
             dist[i] = Integer.MAX_VALUE; 
             selected[i] = false; 
         } 
   
-        // Distance of source vertex from itself is always 0 
         dist[start] = 0; 
-  
-        // Find shortest path for all vertices 
-        for (int count = 0; count < N - 1; count++) { 
-            // Pick the minimum distance vertex from the set of vertices 
-            // not yet processed. u is always equal to src in first 
-            // iteration. 
+        for (int count = 0; count < N; count++) { 
             int u = minDistance(N, dist, selected); 
-  
-            // Mark the picked vertex as processed 
-            selected[u] = true; 
-  
-          
-            
-  				
-			//get all the edges that connected to me
+            selected[u] = true; 	
 			List<Edge> myNeighbors = graph.get(u);
-
-			//loop through all my neighbors to update dis[]
-			for(Edge neighbor: myNeighbors){
-				if(!selected[neighbor.e] &&dist[neighbor.e] > dist[u] + neighbor.dis)
+            for(Edge neighbor: myNeighbors){
+				if(!selected[neighbor.e] && dist[neighbor.e] > dist[u] + neighbor.dis){
 					dist[neighbor.e] = dist[u] + neighbor.dis;
-			}
-               
+                }
+			}  
         }
         return dist[end]; 
-  
     } 
+
+    private void testDijkstra(){
+        String folderPath = "testcase/";
+        File folder = new File(folderPath);
+        File[] files = folder.listFiles();
+        for(int i = 0; i < files.length; i ++){
+            List<List<Integer>> data = Utils.readData(files[i].getAbsolutePath());
+            if(data.size() < 2){
+                return ;
+            }
+            Map<Integer, List<Edge>> graph = buildGraph(data);
+            int N = data.get(0).get(0), start = data.get(0).get(1), end = data.get(0).get(2);
+            int targetDis = 0;
+            // for largeTestData, there isn't targetDistance
+            if(data.get(0).size() >= 4){
+                targetDis = data.get(0).get(3);
+            }
+            System.out.printf("Start running on LargeTestData[%s]\n", files[i].getName());
+            long startTime = System.currentTimeMillis();
+            dijkstra(N, start, end, graph);
+            long endTime = System.currentTimeMillis();
+            System.out.printf("TestData[%s] with N = %d, number of edges = %d, finished in %d ms\n\n", files[i].getName(), N, N * (N - 1), endTime - startTime);
+        }
+    }
   
     // Driver method 
     public static void main(String[] args) 
     { 
-        
         SerializedVersion obj = new SerializedVersion();
-        String filePath = "testcase/TestData1.txt";
-        List<List<Integer>> data = Utils.readData(filePath);
-        if(data.size() < 2){
-            return ;
-        }
-
-        Map<Integer, List<Edge>> graph = obj.buildGraph(data);
-        int N = data.get(0).get(0), start = data.get(0).get(1), end = data.get(0).get(2);
-        int dis = obj.dijkstra(N, start, end, graph);
-
-        System.out.println(dis);
-        
-        
+        obj.testDijkstra();
     } 
 } 

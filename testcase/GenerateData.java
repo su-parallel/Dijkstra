@@ -15,7 +15,7 @@ class GenerateData{
     }
 
     public static void main(String[] args){
-        int[] vertexNum = {10, 100, 100, 1000, 10000, 100000};
+        int[] vertexNum = {10, 100, 100, 1000, 10000, 20000, 300000};
         for(int i = 0; i < vertexNum.length; i ++){
             System.out.printf("generating LargeTestData%d\n", i);
             int N = vertexNum[i];
