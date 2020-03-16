@@ -206,6 +206,9 @@ class ParallelizedDijkstra{
         File folder = new File(folderPath);
         File[] files = folder.listFiles();
         for(int i = 0; i < files.length; i ++){
+            if(!files[i].getName().contains(".txt")){
+                continue;
+            }
             List<List<Integer>> data = Utils.readData(files[i].getAbsolutePath());
             if(data.size() < 2){
                 return ;
