@@ -66,80 +66,51 @@ class ParallelizedDijkstra{
         }
         dis[start] = 0;
         for(int i = 0; i < N; i ++){
-            /**
-            int selectedVertex = -1, minDis = MAX_INF;
-            for(int j = 0; j < N; j ++){
-                if(!selected[j] && minDis > dis[j]){
-                    minDis = dis[j];
-                    selectedVertex = j;
-                }
-            }
-            if(selectedVertex == -1){
-                break;
-            }
-            **/
             int[] result = findMinDistance(N, selected, dis);
-            int selectedVertex = result[0];
-            int minDis = result[1];
-
+            int selectedVertex = result[0], minDis = result[1];
             dis[selectedVertex] = minDis;
             selected[selectedVertex] = true;
             if(graph.containsKey(selectedVertex)){
-                // serial method code
-                // List<Edge> connectedVertex = graph.get(selectedVertex);
-                // for(Edge edge : connectedVertex){
-                //     if(!selected[edge.e] && dis[edge.e] > dis[selectedVertex] + edge.dis){
-                //         dis[edge.e] = dis[selectedVertex] + edge.dis;
-                //     }
-                // }
-                List<Thread> threads = new ArrayList<>();
-                List<Edge> connectedVertex = graph.get(selectedVertex);
-                int size = connectedVertex.size(), thread_size = size / THREAD_N, startIndex = 0;
-                if(thread_size == 0){
-                    thread_size = size;
-                }
-                while(startIndex < size){
-                    updateVertexDistance update = new updateVertexDistance(startIndex, Math.min(startIndex + thread_size, size), selectedVertex, connectedVertex, dis, selected);
-                    startIndex += thread_size;
-                    Thread t = new Thread(update);
-                    threads.add(t);
-                    t.start();
-                } 
-                for(Thread t : threads){
-                    try{
-                        t.join();
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }
-                }
+                updateVertice(selectedVertex, graph, selected, dis);
             }
         }
         return dis[end];
+    }
+
+    private void updateVertice(int selectedVertex, Map<Integer, List<Edge>> graph,  boolean[] selected, int[]dis){
+        List<Thread> threads = new ArrayList<>();
+        List<Edge> connectedVertex = graph.get(selectedVertex);
+        int size = connectedVertex.size(), thread_size = size / THREAD_N, startIndex = 0;
+        if(thread_size == 0){
+            thread_size = size;
+        }
+        while(startIndex < size){
+            updateVertexDistance update = new updateVertexDistance(startIndex, Math.min(startIndex + thread_size, size), selectedVertex, connectedVertex, dis, selected);
+            startIndex += thread_size;
+            Thread t = new Thread(update);
+            threads.add(t);
+            t.start();
+        } 
+        for(Thread t : threads){
+            try{
+                t.join();
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 
     /**
      * Helper method to find the vertex with the shortest distance from the start
      */
     private int[] findMinDistance(int N, boolean[] selected, int[]dis){
-
-
-        int minDis = MAX_INF;
-        int selectedVertex = -1;
-
-        //the amount of data for my thread
-        
-        int my_chunk = N / THREAD_N + 1;
-        
-        int startIndex = 0;
-        int thread_index = 0;
+        int minDis = MAX_INF, selectedVertex = -1;
+        int my_chunk = N / THREAD_N + 1, startIndex = 0, thread_index = 0;
         List<Thread> threads = new ArrayList<>();
-
         while(startIndex < N){
-
             CloestVertexFinder finder = new CloestVertexFinder(startIndex,  Math.min(startIndex + my_chunk, N), thread_index, selected, dis);
             startIndex += my_chunk;
             thread_index += 1;
-            
             Thread t = new Thread(finder);
             threads.add(t);
             t.start();
@@ -154,7 +125,7 @@ class ParallelizedDijkstra{
         }
         
         //doing the reduce, to find the shortest distance and its vertext
-        for(int i = 0; i <= thread_index; i++){
+        for(int i = 0; i < thread_index; i++){
             if(shortestDis[i] < minDis){
                 minDis = shortestDis[i];
                 selectedVertex = closestVertex[i];
@@ -162,9 +133,7 @@ class ParallelizedDijkstra{
 
         }
 
-        //put the shortest distance and vertex into array to return
         int[]array = {selectedVertex, minDis};
-
         return array;
     }
     
@@ -176,22 +145,19 @@ class ParallelizedDijkstra{
         boolean[]selected;
         int[] dis;
 
-
         public CloestVertexFinder(int startIndex, int endIndex, int thread_index, boolean[] selected, int[]dis){
             this.startIndex = startIndex;
             this.endIndex = endIndex;
             this.thread_index = thread_index;
             this.selected = selected;
             this.dis = dis;
-        shortestDis[thread_index] = MAX_INF;
-        closestVertex[thread_index] = -1;
+            shortestDis[thread_index] = MAX_INF;
+            closestVertex[thread_index] = -1;
         }
 
 
         @Override
         public void run(){
-            int min = Integer.MAX_VALUE, min_index = -1; 
-
             for(int j = startIndex; j < endIndex; j ++){
                 if (selected[j] == false && dis[j] <= shortestDis[thread_index]) {
                     shortestDis[thread_index] = dis[j]; 
