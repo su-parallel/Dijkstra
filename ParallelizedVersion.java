@@ -5,8 +5,7 @@ class ParallelizedDijkstra{
     
     private static final int MAX_INF = Integer.MAX_VALUE;
     private static final int THREAD_N = 4;
-    private int[] shortestDis = new int[THREAD_N];
-    private int[] closestVertex = new int[THREAD_N];
+    private List<Integer> dis, selected;
 
     class Edge{
         int s, e, dis;
@@ -58,26 +57,26 @@ class ParallelizedDijkstra{
     * @return the shortest distance from start to end
     */
     private int dijkstra(int N, int start, int end, Map<Integer, List<Edge>> graph){
-        int[] dis = new int[N];
-        boolean[] selected = new boolean[N];
+        dis.clear();
+        selected.clear();
         for(int i = 0; i < N; i ++){
-            dis[i] = MAX_INF;
-            selected[i] = false;
+            dis.add(MAX_INF);
+            selected.add(0);
         }
-        dis[start] = 0;
+        dis.set(start, 0);
         for(int i = 0; i < N; i ++){
-            int[] result = findMinDistance(N, selected, dis);
+            int[] result = findMinDistance(N);
             int selectedVertex = result[0], minDis = result[1];
-            dis[selectedVertex] = minDis;
-            selected[selectedVertex] = true;
+            dis.set(selectedVertex, minDis);
+            selected.set(selectedVertex, 1);
             if(graph.containsKey(selectedVertex)){
-                updateVertice(selectedVertex, graph, selected, dis);
+                updateVertice(selectedVertex, graph);
             }
         }
-        return dis[end];
+        return dis.get(end);
     }
 
-    private void updateVertice(int selectedVertex, Map<Integer, List<Edge>> graph,  boolean[] selected, int[]dis){
+    private void updateVertice(int selectedVertex, Map<Integer, List<Edge>> graph){
         List<Thread> threads = new ArrayList<>();
         List<Edge> connectedVertex = graph.get(selectedVertex);
         int size = connectedVertex.size(), thread_size = size / THREAD_N, startIndex = 0;
@@ -85,7 +84,7 @@ class ParallelizedDijkstra{
             thread_size = size;
         }
         while(startIndex < size){
-            updateVertexDistance update = new updateVertexDistance(startIndex, Math.min(startIndex + thread_size, size), selectedVertex, connectedVertex, dis, selected);
+            updateVertexDistance update = new updateVertexDistance(startIndex, Math.min(startIndex + thread_size, size), selectedVertex, connectedVertex);
             startIndex += thread_size;
             Thread t = new Thread(update);
             threads.add(t);
@@ -103,17 +102,19 @@ class ParallelizedDijkstra{
     /**
      * Helper method to find the vertex with the shortest distance from the start
      */
-    private int[] findMinDistance(int N, boolean[] selected, int[]dis){
+    private int[] findMinDistance(int N){
         int minDis = MAX_INF, selectedVertex = -1;
         int my_chunk = N / THREAD_N + 1, startIndex = 0, thread_index = 0;
         List<Thread> threads = new ArrayList<>();
+        List<CloestVertexFinder> finders = new ArrayList<>();
         while(startIndex < N){
-            CloestVertexFinder finder = new CloestVertexFinder(startIndex,  Math.min(startIndex + my_chunk, N), thread_index, selected, dis);
+            CloestVertexFinder finder = new CloestVertexFinder(startIndex,  Math.min(startIndex + my_chunk, N), thread_index);
             startIndex += my_chunk;
             thread_index += 1;
             Thread t = new Thread(finder);
             threads.add(t);
             t.start();
+            finders.add(finder);
         }
 
         for(Thread t : threads){
@@ -125,12 +126,11 @@ class ParallelizedDijkstra{
         }
         
         //doing the reduce, to find the shortest distance and its vertext
-        for(int i = 0; i < thread_index; i++){
-            if(shortestDis[i] < minDis){
-                minDis = shortestDis[i];
-                selectedVertex = closestVertex[i];
+        for(int i = 0; i < finders.size(); i++){
+            if(finders.get(i).minDis < minDis){
+                minDis = finders.get(i).minDis;
+                selectedVertex = finders.get(i).closestVertex;
             }
-
         }
 
         int[]array = {selectedVertex, minDis};
@@ -142,26 +142,23 @@ class ParallelizedDijkstra{
     */
     class CloestVertexFinder implements Runnable{
         int startIndex, endIndex, thread_index;
-        boolean[]selected;
-        int[] dis;
+        int minDis, closestVertex;
 
-        public CloestVertexFinder(int startIndex, int endIndex, int thread_index, boolean[] selected, int[]dis){
+        public CloestVertexFinder(int startIndex, int endIndex, int thread_index){
             this.startIndex = startIndex;
             this.endIndex = endIndex;
             this.thread_index = thread_index;
-            this.selected = selected;
-            this.dis = dis;
-            shortestDis[thread_index] = MAX_INF;
-            closestVertex[thread_index] = -1;
+            minDis = MAX_INF;
+            closestVertex = -1;
         }
 
 
         @Override
         public void run(){
             for(int j = startIndex; j < endIndex; j ++){
-                if (selected[j] == false && dis[j] <= shortestDis[thread_index]) {
-                    shortestDis[thread_index] = dis[j]; 
-                    closestVertex[thread_index] = j; 
+                if (selected.get(j) == 0 && dis.get(j) <= minDis) {
+                    minDis = dis.get(j);
+                    closestVertex = j; 
                 }
             }
         }
@@ -173,35 +170,31 @@ class ParallelizedDijkstra{
     class updateVertexDistance implements Runnable{
         int startIndex, endIndex, selectedVertex;
         List<Edge> connectedVertex;
-        int[] dis;
-        boolean[] selected;
 
         public updateVertexDistance(int startIndex, 
                                     int endIndex, 
                                     int selectedVertex, 
-                                    List<Edge> connectedVertex,
-                                    int[] dis,
-                                    boolean[] selected){
+                                    List<Edge> connectedVertex){
             this.startIndex = startIndex;
             this.endIndex = endIndex;
             this.selectedVertex = selectedVertex;
             this.connectedVertex = connectedVertex;
-            this.dis = dis;
-            this.selected = selected;
         }
 
         @Override
         public void run(){
             for(int i = startIndex; i < endIndex; i ++){
                 Edge edge = connectedVertex.get(i);
-                if(!selected[edge.e] && dis[edge.e] > dis[selectedVertex] + edge.dis){
-                    dis[edge.e] = dis[selectedVertex] + edge.dis;
+                if(selected.get(edge.e) == 0 && dis.get(edge.e) > dis.get(selectedVertex) + edge.dis){
+                    dis.set(edge.e, dis.get(selectedVertex) + edge.dis);
                 }
             }
         }
     }
 
     private void testDijkstra(){
+        dis = new ArrayList<>();
+        selected = new ArrayList<>();
         String folderPath = "testcase/";
         File folder = new File(folderPath);
         File[] files = folder.listFiles();
